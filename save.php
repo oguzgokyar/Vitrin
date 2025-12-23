@@ -58,6 +58,11 @@ if ($action === 'save_all') {
         echo json_encode(['error' => 'Config dosyası yazılamadı.']);
     }
 
+} elseif ($action === 'verify') {
+    // Password check is already done in the 'Admin actions' block above.
+    // If we reached here, it means the password is correct.
+    echo json_encode(['success' => true]);
+
 } elseif ($action === 'vote') {
     $id = $input['id'] ?? null;
     $score = $input['score'] ?? 0;

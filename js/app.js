@@ -65,7 +65,7 @@ document.addEventListener('alpine:init', () => {
                     body: JSON.stringify({
                         action: 'save_all',
                         data: this.items,
-                        password: 'admin123' // Sending hardcoded password as agreed
+                        password: sessionStorage.getItem('vitrin_password') || 'admin123'
                     })
                 });
             } catch (e) {

@@ -42,6 +42,17 @@ const server = http.createServer((req, res) => {
                     res.writeHead(200, { 'Content-Type': 'application/json' });
                     res.end(JSON.stringify({ success: true }));
                 }
+                else if (action === 'change_password') {
+                    if (input.password !== ADMIN_PASSWORD) {
+                        res.writeHead(401, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({ error: 'Unauthorized' }));
+                        return;
+                    }
+                    // In local dev handling, we just return success mock
+                    // We don't overwrite config.php from Node.js
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ success: true }));
+                }
                 else if (action === 'vote') {
                     const id = input.id;
                     const score = input.score;
