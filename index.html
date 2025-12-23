@@ -170,9 +170,9 @@
                                     x-text="app.description"></p>
 
                                 <!-- Rating System -->
-                                <div class="flex items-center gap-1" @click.prevent>
+                                <div class="flex items-center gap-1" @click.prevent.stop>
                                     <template x-for="i in 5">
-                                        <button @click.stop="$store.apps.rate(app.id, i)"
+                                        <button type="button" @click.prevent.stop="$store.apps.rate(app.id, i)"
                                             class="focus:outline-none transition-transform hover:scale-125">
                                             <svg class="w-4 h-4"
                                                 :class="i <= Math.round(app.rating || 0) ? 'text-yellow-400 fill-current' : 'text-slate-300 dark:text-slate-600'"
