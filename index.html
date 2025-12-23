@@ -213,8 +213,28 @@
         </div>
     </div>
 
-    <footer class="mt-20 text-center text-gray-500 text-sm">
-        <p>&copy; 2025 Vitrin App Store</p>
+    <footer class="mt-20 text-center text-gray-500 text-sm pb-8" x-data="{ 
+        version: 'v1.0', 
+        hash: '', 
+        init() {
+            fetch('version.json')
+                .then(r => r.json())
+                .then(d => {
+                    if(d.hash) {
+                        this.version = '';
+                        this.hash = 'Git: ' + d.hash;
+                    }
+                })
+                .catch(e => console.log('Version info not found'));
+        }
+    }">
+        <p>
+            &copy; 2025 Vitrin App Store
+            <span class="mx-2">|</span>
+            <span x-text="version"></span>
+            <span x-show="hash" x-text="hash"
+                class="font-mono text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded ml-1"></span>
+        </p>
         <a href="admin.html" class="inline-block mt-4 text-gray-400 hover:text-gray-600 transition-colors">Yönetici
             Girişi</a>
     </footer>

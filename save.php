@@ -8,21 +8,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
 }
 
+// --- Configuration ---
+require_once 'config.php';
+// $adminPassword is now loaded from config.php
 $dataFile = 'data.json';
-$adminPassword = 'admin123';
+// ---------------------
 
 // Get request body
 $input = json_decode(file_get_contents('php://input'), true);
 $action = $input['action'] ?? '';
 
-if ($action === 'save_all') {
-    // Admin Only
-    if (($input['password'] ?? '') !== $adminPassword) {
+// Public actions
+if ($action === 'vote') {
+    // Logic handled below
+} 
+// Admin actions
+else {
+    $pass = $input['password'] ?? '';
+    if ($pass !== $adminPassword) {
         http_response_code(401);
         echo json_encode(['error' => 'Unauthorized']);
         exit;
     }
+}
 
+if ($action === 'save_all') {
     $data = $input['data'] ?? [];
     if (file_put_contents($dataFile, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))) {
         echo json_encode(['success' => true]);
@@ -31,8 +41,24 @@ if ($action === 'save_all') {
         echo json_encode(['error' => 'Failed to write file']);
     }
 
+} elseif ($action === 'change_password') {
+    $newPass = $input['new_password'] ?? '';
+    if (strlen($newPass) < 5) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Şifre en az 5 karakter olmalı.']);
+        exit;
+    }
+    
+    // Update config.php securely
+    $content = "<?php\n\$adminPassword = '" . addslashes($newPass) . "';\n?>";
+    if (file_put_contents('config.php', $content)) {
+        echo json_encode(['success' => true]);
+    } else {
+        http_response_code(500);
+        echo json_encode(['error' => 'Config dosyası yazılamadı.']);
+    }
+
 } elseif ($action === 'vote') {
-    // Public Access
     $id = $input['id'] ?? null;
     $score = $input['score'] ?? 0;
 
@@ -76,3 +102,4 @@ if ($action === 'save_all') {
     http_response_code(400);
     echo json_encode(['error' => 'Invalid action']);
 }
+?>

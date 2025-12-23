@@ -1,9 +1,8 @@
-<?php
-header('Content-Type: application/json');
-
 // --- Configuration ---
-$adminPassword = 'admin123';
-$repoZipUrl = 'https://github.com/oguzgokyar/Vitrin/archive/refs/heads/main.zip';
+require_once 'config.php';
+// $adminPassword is here
+$repoUser = 'oguzgokyar';
+$repoName = 'Vitrin';
 // ---------------------
 
 $input = json_decode(file_get_contents('php://input'), true);
@@ -17,6 +16,27 @@ if ($pass !== $adminPassword) {
 }
 
 if ($action === 'update') {
+    // 0. Fetch Git Commit Info (Version)
+    $commitApiUrl = "https://api.github.com/repos/$repoUser/$repoName/commits/HEAD";
+    $ch = curl_init($commitApiUrl);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_USERAGENT, 'Vitrin-Auto-Updater');
+    $commitResponse = curl_exec($ch);
+    $commitHttpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    $versionInfo = ['hash' => 'unknown', 'date' => date('Y-m-d')];
+    if ($commitHttpCode === 200) {
+        $commitData = json_decode($commitResponse, true);
+        $shortHash = substr($commitData['sha'], 0, 7);
+        $commitDate = date('Y-m-d H:i', strtotime($commitData['commit']['committer']['date']));
+        $versionInfo = ['hash' => $shortHash, 'date' => $commitDate];
+        
+        // Save version.json
+        file_put_contents('version.json', json_encode($versionInfo));
+    }
+
+    // 1. Download ZIP
     // Try 'main' first, then 'master'
     $branches = ['main', 'master'];
     $zipFile = 'update_temp.zip';
@@ -24,11 +44,11 @@ if ($action === 'update') {
     $UsedBranch = '';
 
     foreach ($branches as $branch) {
-        $url = "https://github.com/oguzgokyar/Vitrin/archive/refs/heads/$branch.zip";
+        $url = "https://github.com/$repoUser/$repoName/archive/refs/heads/$branch.zip";
         
         $fp = fopen($zipFile, 'w+');
         $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 50);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 60);
         curl_setopt($ch, CURLOPT_FILE, $fp); 
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_USERAGENT, 'Vitrin-Auto-Updater');
@@ -45,7 +65,7 @@ if ($action === 'update') {
     }
 
     if (!$downloadSuccess) {
-        unlink($zipFile);
+        if (file_exists($zipFile)) unlink($zipFile);
         echo json_encode(['error' => 'Failed to download update from GitHub (Checked branches: main, master). Last Code: ' . $httpCode]);
         exit;
     }
@@ -59,9 +79,9 @@ if ($action === 'update') {
         
         // 3. Move files
         // GitHub zips extract to 'RepoName-BranchName'
-        $sourceDir = $extractPath . 'Vitrin-' . $UsedBranch; // Predictable path logic
+        $sourceDir = $extractPath . "$repoName-$UsedBranch"; // Predictable path logic
         
-        // Fallback if prediction fails (e.g. repo name case difference)
+        // Fallback if prediction fails
         if (!is_dir($sourceDir)) {
             $subDirs = glob($extractPath . '/*', GLOB_ONLYDIR);
             if (count($subDirs) > 0) {
@@ -78,8 +98,8 @@ if ($action === 'update') {
             $relativePath = substr($file->getPathname(), strlen($sourceDir) + 1);
             $targetPath = './' . $relativePath;
 
-            // Skip data.json
-            if ($relativePath === 'data.json') {
+            // Skip protected files
+            if ($relativePath === 'data.json' || $relativePath === 'config.php' || $relativePath === 'version.json') {
                 continue;
             }
 
@@ -109,7 +129,7 @@ if ($action === 'update') {
         }
         rmdir($extractPath);
 
-        echo json_encode(['success' => true, 'message' => 'System updated successfully.']);
+        echo json_encode(['success' => true, 'message' => 'System updated successfully.', 'version' => $versionInfo]);
     } else {
         echo json_encode(['error' => 'Failed to unzip update package.']);
     }
