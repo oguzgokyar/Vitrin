@@ -92,6 +92,15 @@ const server = http.createServer((req, res) => {
         return;
     }
 
+    // Handle /update.php emulation
+    if (parsedUrl.pathname === '/update.php' && req.method === 'POST') {
+        setTimeout(() => {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: true, message: 'Mock update successful' }));
+        }, 1500);
+        return;
+    }
+
     // Serve Static Files
     if (filePath === './') {
         filePath = './index.html';
