@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="tr" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vitrin - Uygulama Marketi</title>
+    <meta name="description" content="Kişisel uygulama vitrini">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        // Check theme on load
+        if (localStorage.getItem('vitrin_theme') === 'dark' || (!('vitrin_theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark')
+        } else {
+            document.documentElement.classList.remove('dark')
+        }
+
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        [x-cloak] {
+            display: none !important;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .dark .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 dark:bg-slate-900 text-gray-800 dark:text-gray-100 min-h-screen transition-colors duration-300"
+    x-data="{
+          darkMode: localStorage.getItem('vitrin_theme') === 'dark' || (!('vitrin_theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches),
+          toggleTheme() {
+              this.darkMode = !this.darkMode;
+              if (this.darkMode) {
+                  document.documentElement.classList.add('dark');
+                  localStorage.setItem('vitrin_theme', 'dark');
+              } else {
+                  document.documentElement.classList.remove('dark');
+                  localStorage.setItem('vitrin_theme', 'light');
+              }
+          }
+      }">
+
+    <!-- Background Gradient -->
+    <div class="fixed inset-0 -z-10 overflow-hidden">
+        <div
+            class="absolute top-0 left-1/4 w-96 h-96 bg-blue-400/20 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob">
+        </div>
+        <div
+            class="absolute top-0 right-1/4 w-96 h-96 bg-purple-400/20 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-2000">
+        </div>
+        <div
+            class="absolute -bottom-32 left-1/3 w-96 h-96 bg-pink-400/20 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-4000">
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-12 relative">
+        <!-- Theme Toggle -->
+        <button @click="toggleTheme()"
+            class="absolute top-6 right-6 p-2 rounded-lg bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-700 transition-all shadow-sm z-50">
+            <svg x-show="!darkMode" class="w-6 h-6 text-yellow-500" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z">
+                </path>
+            </svg>
+            <svg x-show="darkMode" class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+            </svg>
+        </button>
+
+        <!-- Header -->
+        <header class="text-center mb-16">
+            <h1
+                class="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-violet-600 mb-4">
+                Uygulama Vitrini
+            </h1>
+            <p class="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+                Geliştirdiğim projeler ve yayınladığım uygulamalar tek bir yerde.
+            </p>
+        </header>
+
+        <!-- App Grid Section inside a new x-data scope for filtering -->
+        <div x-data="{
+            selectedCategory: 'Tümü',
+            get uniqueCategories() {
+                const apps = $store.apps.items;
+                const categories = new Set(apps.map(a => a.category).filter(c => c));
+                return ['Tümü', ...Array.from(categories)];
+            },
+            get filteredApps() {
+                if (this.selectedCategory === 'Tümü') return $store.apps.items;
+                return $store.apps.items.filter(app => app.category === this.selectedCategory);
+            }
+        }" class="space-y-8">
+
+            <!-- Filter Buttons -->
+            <div class="flex flex-wrap gap-3 justify-center">
+                <template x-for="category in uniqueCategories" :key="category">
+                    <button @click="selectedCategory = category"
+                        class="px-4 py-2 rounded-full text-sm font-medium transition-all duration-300"
+                        :class="selectedCategory === category 
+                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' 
+                                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'">
+                        <span x-text="category"></span>
+                    </button>
+                </template>
+            </div>
+
+            <!-- App Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <template x-for="app in filteredApps" :key="app.id">
+                    <a :href="app.url" target="_blank"
+                        class="glass-card rounded-2xl p-4 hover:scale-[1.02] transition-all duration-300 shadow-lg hover:shadow-xl group block">
+                        <div class="flex items-center gap-5">
+                            <!-- Logo (Left) -->
+                            <div
+                                class="w-20 h-20 shrink-0 rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-slate-700 dark:to-slate-600 flex items-center justify-center text-3xl shadow-inner overflow-hidden">
+                                <img x-show="app.iconUrl" :src="app.iconUrl" :alt="app.name"
+                                    class="w-full h-full object-cover">
+                                <span x-show="!app.iconUrl" x-text="app.name.charAt(0)"></span>
+                            </div>
+
+                            <!-- Content (Right) -->
+                            <div class="flex-1 min-w-0 text-left">
+                                <div class="flex items-center justify-between mb-1">
+                                    <h2 class="text-xl font-bold group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate"
+                                        x-text="app.name"></h2>
+                                    <span
+                                        class="px-2 py-0.5 text-[10px] uppercase tracking-wider font-bold rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 shrink-0 border border-slate-200 dark:border-slate-700"
+                                        x-text="app.category || 'APP'"></span>
+                                </div>
+                                <p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed line-clamp-2 mb-3"
+                                    x-text="app.description"></p>
+
+                                <!-- Rating System -->
+                                <div class="flex items-center gap-1" @click.prevent>
+                                    <template x-for="i in 5">
+                                        <button @click.stop="$store.apps.rate(app.id, i)"
+                                            class="focus:outline-none transition-transform hover:scale-125">
+                                            <svg class="w-4 h-4"
+                                                :class="i <= Math.round(app.rating || 0) ? 'text-yellow-400 fill-current' : 'text-slate-300 dark:text-slate-600'"
+                                                viewBox="0 0 20 20">
+                                                <path
+                                                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                            </svg>
+                                        </button>
+                                    </template>
+                                    <span class="text-xs text-slate-400 ml-1" x-text="`(${app.votes || 0})`"></span>
+                                </div>
+                            </div>
+
+                            <!-- Arrow Icon -->
+                            <div
+                                class="text-slate-300 dark:text-slate-600 group-hover:text-blue-500 dark:group-hover:text-blue-400 group-hover:translate-x-1 transition-all">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 5l7 7-7 7" />
+                                </svg>
+                            </div>
+                        </div>
+                    </a>
+                </template>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div x-show="$store.apps.items.length === 0" class="col-span-full text-center py-20">
+            <div class="text-gray-400 mb-4">
+                <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 00-2 2H6a2 2 0 00-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                </svg>
+            </div>
+            <p class="text-xl text-gray-500">Henüz yayınlanmış bir uygulama yok.</p>
+            <p class="text-sm text-gray-400 mt-2">Admin panelinden yeni uygulama ekleyebilirsiniz.</p>
+        </div>
+    </div>
+
+    <footer class="mt-20 text-center text-gray-500 text-sm">
+        <p>&copy; 2025 Vitrin App Store</p>
+        <a href="admin.html" class="inline-block mt-4 text-gray-400 hover:text-gray-600 transition-colors">Yönetici
+            Girişi</a>
+    </footer>
+    </div>
+
+    <!-- App Logic -->
+    <script src="js/app.js"></script>
+</body>
+
+</html>

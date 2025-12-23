@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "name": "Test App",
+    "rating": 5,
+    "votes": 1,
+    "iconUrl": "https://play-lh.googleusercontent.com/o1Dkg_yAUtjSWAalZ1Xu266QiGFLqxFH2mxRvoqavR-R0DQbUvHwbXgOkB-8bqdoyLU=s96-rw",
+    "description": "VPN Süper Sınırsız Proxy- Ücretsiz Proxy VPN, proxy sitelere süper hızlı VPN, video ve filmleri izleme, WiFi güvenliğini koruma ve gizliliği koruma. Video yayın deneyiminizi turbo şarj edin.",
+    "category": "mobil",
+    "url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSzXYRAn2-jWgwWBje0pH4Ehv-dL3SR6y_-fQ&s"
+  },
+  {
+    "id": 1766485863187,
+    "rating": 0,
+    "votes": 0,
+    "name": "Betonax.com",
+    "description": "Mikro beton ürünleri üretici ve uygulama firması",
+    "url": "https://www.betonax.com/",
+    "iconUrl": "https://www.google.com/s2/favicons?domain=betonax.com&sz=128",
+    "category": "web",
+    "createdAt": "2025-12-23T10:31:03.187Z"
+  }
+]

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vitrin Yönetim Paneli</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        // Check theme on load
+        if (localStorage.getItem('vitrin_theme') === 'dark' || (!('vitrin_theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark')
+        } else {
+            document.documentElement.classList.remove('dark')
+        }
+
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Outfit', 'sans-serif'] },
+                    colors: {
+                        primary: { 500: '#0ea5e9', 600: '#0284c7' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        [x-cloak] {
+            display: none !important;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        .dark .glass-panel {
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .dark .bg-white {
+            background-color: #1e293b;
+            border-color: #334155;
+            color: #e2e8f0;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen p-6" x-data="{
+          isLoggedIn: sessionStorage.getItem('vitrin_auth') === 'true',
+          password: '',
+          error: '',
+          newApp: { name: '', description: '', url: '', iconUrl: '', category: '' },
+          isEditing: false,
+          editId: null,
+          darkMode: localStorage.getItem('vitrin_theme') === 'dark' || (!('vitrin_theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches),
+          
+          toggleTheme() {
+              this.darkMode = !this.darkMode;
+              if (this.darkMode) {
+                  document.documentElement.classList.add('dark');
+                  localStorage.setItem('vitrin_theme', 'dark');
+              } else {
+                  document.documentElement.classList.remove('dark');
+                  localStorage.setItem('vitrin_theme', 'light');
+              }
+          },
+
+          login() {
+              if (this.password === 'admin123') { // Simple password
+                  this.isLoggedIn = true;
+                  sessionStorage.setItem('vitrin_auth', 'true');
+                  this.error = '';
+              } else {
+                  this.error = 'Hatalı şifre!';
+              }
+          },
+          logout() {
+              this.isLoggedIn = false;
+              sessionStorage.removeItem('vitrin_auth');
+              this.password = '';
+          },
+          saveApp() { // Renamed from addApp
+              if (!this.newApp.name || !this.newApp.url) {
+                  alert('Lütfen en az Uygulama Adı ve URL alanlarını doldurun.');
+                  return;
+              }
+              
+              if (this.isEditing) {
+                  $store.apps.update({ id: this.editId, ...this.newApp });
+                  alert('Uygulama güncellendi!');
+                  this.isEditing = false;
+                  this.editId = null;
+              } else {
+                  $store.apps.add(this.newApp);
+                  alert('Uygulama başarıyla eklendi!');
+              }
+              
+              this.newApp = { name: '', description: '', url: '', iconUrl: '', category: '' }; // Reset
+          },
+          autoFillIcon() {
+              if (this.newApp.url && !this.newApp.iconUrl) {
+                  try {
+                      let urlObj = new URL(this.newApp.url);
+                      this.newApp.iconUrl = `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=128`;
+                  } catch (e) {
+                      if (!this.newApp.url.startsWith('http')) {
+                          try {
+                              let urlObj = new URL('https://' + this.newApp.url);
+                              this.newApp.iconUrl = `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=128`;
+                          } catch (e2) {}
+                      }
+                  }
+              }
+          },
+          editApp(app) {
+              this.newApp = { ...app };
+              this.isEditing = true;
+              this.editId = app.id;
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+          },
+          cancelEdit() {
+              this.isEditing = false;
+              this.editId = null;
+              this.newApp = { name: '', description: '', url: '', iconUrl: '', category: '' };
+          },
+          deleteApp(id) {
+              if (confirm('Bu uygulamayı silmek istediğinizden emin misiniz?')) {
+                  $store.apps.remove(id);
+                  if (this.editId === id) this.cancelEdit();
+              }
+          }
+      }">
+
+    <!-- Theme Toggle (Fixed Top Right) -->
+    <button @click="toggleTheme()"
+        class="fixed top-6 right-6 p-2 rounded-lg bg-white/80 dark:bg-slate-800/80 hover:bg-white dark:hover:bg-slate-700 transition-all shadow-sm z-50">
+        <svg x-show="!darkMode" class="w-6 h-6 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z">
+            </path>
+        </svg>
+        <svg x-show="darkMode" class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+        </svg>
+    </button>
+
+    <div class="max-w-4xl mx-auto">
+        <!-- Login Screen -->
+        <div x-show="!isLoggedIn" x-transition class="max-w-md mx-auto mt-20 text-center">
+            <div class="glass-panel p-8 rounded-2xl shadow-xl">
+                <h2 class="text-2xl font-bold mb-6 text-slate-700 dark:text-slate-200">Yönetici Girişi</h2>
+                <form @submit.prevent="login" class="space-y-4">
+                    <div>
+                        <input type="password" x-model="password" placeholder="Şifre (admin123)"
+                            class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all"
+                            autofocus>
+                    </div>
+                    <p x-show="error" x-text="error" class="text-red-500 text-sm font-medium"></p>
+                    <button type="submit"
+                        class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold py-3 rounded-xl hover:shadow-lg hover:shadow-blue-500/30 transition-all">
+                        Giriş Yap
+                    </button>
+                    <div class="pt-4">
+                        <a href="index.html" class="text-sm text-slate-400 hover:text-slate-600">← Vitrine Dön</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Dashboard -->
+        <div x-show="isLoggedIn" x-cloak>
+            <header class="flex justify-between items-center mb-10">
+                <h1
+                    class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+                    Yönetim Paneli</h1>
+                <div class="flex gap-4">
+                    <a href="index.html" target="_blank"
+                        class="px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors">Vitrine
+                        Git</a>
+                    <button @click="logout"
+                        class="px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">Çıkış
+                        Yap</button>
+                </div>
+            </header>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Add New App Form -->
+                <div class="lg:col-span-1">
+                    <div
+                        class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 sticky top-6">
+                        <h3
+                            class="text-xl font-semibold mb-4 text-slate-700 dark:text-slate-200 flex justify-between items-center">
+                            <span x-text="isEditing ? 'Düzenle' : 'Yeni Ekle'"></span>
+                            <button x-show="isEditing" @click="cancelEdit"
+                                class="text-xs text-red-500 hover:text-red-600">İptal</button>
+                        </h3>
+                        <form @submit.prevent="saveApp" class="space-y-4">
+                            <div>
+                                <label
+                                    class="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Uygulama
+                                    Adı</label>
+                                <input type="text" x-model="newApp.name"
+                                    class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 focus:ring-2 focus:ring-blue-500 outline-none"
+                                    placeholder="Örn: Benim Projem">
+                            </div>
+                            <div>
+                                <label
+                                    class="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Kategori</label>
+                                <input type="text" x-model="newApp.category"
+                                    class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 focus:ring-2 focus:ring-blue-500 outline-none"
+                                    placeholder="Örn: Web, Mobil">
+                            </div>
+                            <div>
+                                <label
+                                    class="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">URL</label>
+                                <input type="url" x-model="newApp.url" @blur="autoFillIcon"
+                                    class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 focus:ring-2 focus:ring-blue-500 outline-none"
+                                    placeholder="https://...">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">İkon
+                                    URL
+                                    (Opsiyonel)</label>
+                                <input type="text" x-model="newApp.iconUrl"
+                                    class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 focus:ring-2 focus:ring-blue-500 outline-none"
+                                    placeholder="https://.../icon.png">
+                            </div>
+                            <div>
+                                <label
+                                    class="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Açıklama</label>
+                                <textarea x-model="newApp.description" rows="3"
+                                    class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 focus:ring-2 focus:ring-blue-500 outline-none"
+                                    placeholder="Kısa açıklama..."></textarea>
+                            </div>
+                            <button type="submit"
+                                class="w-full text-white font-medium py-2.5 rounded-xl transition-colors shadow-lg"
+                                :class="isEditing ? 'bg-orange-500 hover:bg-orange-600 shadow-orange-500/20' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/20'"
+                                x-text="isEditing ? 'Güncelle' : 'Ekle'">
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Existing Apps List -->
+                <div class="lg:col-span-2">
+                    <h3 class="text-xl font-semibold mb-4 text-slate-700 dark:text-slate-200">Mevcut Uygulamalar (<span
+                            x-text="$store.apps.items.length"></span>)</h3>
+
+                    <div class="space-y-4">
+                        <template x-for="app in $store.apps.items.slice().reverse()" :key="app.id">
+                            <div
+                                class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center gap-4 group hover:border-blue-200 dark:hover:border-slate-600 transition-colors">
+                                <div
+                                    class="w-12 h-12 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0 overflow-hidden">
+                                    <img x-show="app.iconUrl" :src="app.iconUrl" class="w-full h-full object-cover">
+                                    <span x-show="!app.iconUrl" x-text="app.name.charAt(0)"
+                                        class="text-lg font-bold text-slate-400 dark:text-slate-500"></span>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="font-semibold text-slate-800 dark:text-slate-200 truncate"
+                                        x-text="app.name"></h4>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 truncate" x-text="app.url"></p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <a :href="app.url" target="_blank"
+                                        class="p-2 text-slate-400 hover:text-blue-600 transition-colors"
+                                        title="Görüntüle">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                        </svg>
+                                    </a>
+                                    <button @click="editApp(app)"
+                                        class="p-2 text-slate-400 hover:text-orange-500 transition-colors"
+                                        title="Düzenle">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        </svg>
+                                    </button>
+                                    <button @click="deleteApp(app.id)"
+                                        class="p-2 text-slate-400 hover:text-red-600 transition-colors" title="Sil">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+
+                        <div x-show="$store.apps.items.length === 0"
+                            class="text-center py-10 text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-800 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
+                            Hiç uygulama yok.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+
+</html>
