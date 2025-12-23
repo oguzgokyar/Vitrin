@@ -1,3 +1,6 @@
+<?php
+header('Content-Type: application/json');
+
 // --- Configuration ---
 require_once 'config.php';
 // $adminPassword is here
