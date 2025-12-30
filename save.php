@@ -19,7 +19,7 @@ $input = json_decode(file_get_contents('php://input'), true);
 $action = $input['action'] ?? '';
 
 // Public actions
-if ($action === 'vote') {
+if ($action === 'vote' || $action === 'get_settings') {
     // Logic handled below
 } 
 // Admin actions
@@ -101,6 +101,36 @@ if ($action === 'save_all') {
     } else {
         http_response_code(404);
         echo json_encode(['error' => 'App not found']);
+    }
+
+} elseif ($action === 'get_settings') {
+    $settingsFile = 'settings.json';
+    $defaultSettings = [
+        'appName' => 'Uygulama Vitrini',
+        'appIcon' => '',
+        'appDescription' => 'Geliştirdiğim projeler ve yayınladığım uygulamalar tek bir yerde.'
+    ];
+    
+    if (file_exists($settingsFile)) {
+        $settings = json_decode(file_get_contents($settingsFile), true) ?? $defaultSettings;
+    } else {
+        $settings = $defaultSettings;
+    }
+    echo json_encode($settings);
+
+} elseif ($action === 'save_settings') {
+    $settingsFile = 'settings.json';
+    $settings = [
+        'appName' => $input['appName'] ?? 'Uygulama Vitrini',
+        'appIcon' => $input['appIcon'] ?? '',
+        'appDescription' => $input['appDescription'] ?? ''
+    ];
+    
+    if (file_put_contents($settingsFile, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))) {
+        echo json_encode(['success' => true]);
+    } else {
+        http_response_code(500);
+        echo json_encode(['error' => 'Ayarlar kaydedilemedi.']);
     }
 
 } else {

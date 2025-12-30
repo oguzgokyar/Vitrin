@@ -6,6 +6,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vitrin - Uygulama Marketi</title>
     <meta name="description" content="Kişisel uygulama vitrini">
+    <!-- Dynamic Favicon -->
+    <link rel="icon" id="dynamic-favicon" href="favicon.ico">
+    <link rel="apple-touch-icon" id="apple-touch-icon" href="favicon.ico">
+    <script>
+        // Load app icon from settings.json and set as favicon
+        fetch('settings.json')
+            .then(r => r.json())
+            .then(settings => {
+                if (settings.appIcon) {
+                    document.getElementById('dynamic-favicon').href = settings.appIcon;
+                    document.getElementById('apple-touch-icon').href = settings.appIcon;
+                }
+                // Also update title and description if available
+                if (settings.appName) {
+                    document.title = settings.appName;
+                }
+                if (settings.appDescription) {
+                    document.querySelector('meta[name="description"]').content = settings.appDescription;
+                }
+            })
+            .catch(e => console.log('Settings not loaded:', e));
+    </script>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Alpine.js -->
@@ -64,17 +86,34 @@
 <body class="bg-gray-50 dark:bg-slate-900 text-gray-800 dark:text-gray-100 min-h-screen transition-colors duration-300"
     x-data="{
           darkMode: localStorage.getItem('vitrin_theme') === 'dark' || (!('vitrin_theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches),
-          toggleTheme() {
-              this.darkMode = !this.darkMode;
-              if (this.darkMode) {
-                  document.documentElement.classList.add('dark');
-                  localStorage.setItem('vitrin_theme', 'dark');
-              } else {
-                  document.documentElement.classList.remove('dark');
-                  localStorage.setItem('vitrin_theme', 'light');
-              }
-          }
-      }">
+          siteSettings: { appName: 'Uygulama Vitrini', appIcon: '', appDescription: 'Geliştirdiğim projeler ve yayınladığım uygulamalar tek bir yerde.' },
+          init() {
+              this.loadSettings();
+          },
+          async loadSettings() {
+              try {
+                  const res = await fetch('save.php', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ action: 'get_settings' })
+                  });
+                  const data = await res.json();
+                  this.siteSettings = {
+                      appName: data.appName || 'Uygulama Vitrini',
+                      appIcon: data.appIcon || '',
+                      appDescription: data.appDescription || 'Geliştirdiğim projeler ve yayınladığım uygulamalar tek bir yerde.'
+                  };
+                  // Update page title
+                  document.title = this.siteSettings.appName + ' - Vitrin';
+                  // Update meta description
+                  const metaDesc = document.querySelector('meta[name=\" description\"]'); if (metaDesc)
+    metaDesc.setAttribute('content', this.siteSettings.appDescription); // Update favicon if icon URL is provided if
+    (this.siteSettings.appIcon) { let favicon=document.querySelector('link[rel=\"icon\"]'); if (!favicon) {
+    favicon=document.createElement('link'); favicon.rel='icon' ; document.head.appendChild(favicon); }
+    favicon.href=this.siteSettings.appIcon; } } catch (e) { console.log('Ayarlar yüklenemedi, varsayılan değerler
+    kullanılıyor.'); } }, toggleTheme() { this.darkMode=!this.darkMode; if (this.darkMode) {
+    document.documentElement.classList.add('dark'); localStorage.setItem('vitrin_theme', 'dark' ); } else {
+    document.documentElement.classList.remove('dark'); localStorage.setItem('vitrin_theme', 'light' ); } } }">
 
     <!-- Background Gradient -->
     <div class="fixed inset-0 -z-10 overflow-hidden">
@@ -107,11 +146,11 @@
 
         <!-- Header -->
         <header class="text-center mb-16">
-            <h1
-                class="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-violet-600 mb-4">
+            <h1 class="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-violet-600 mb-4"
+                x-text="siteSettings.appName">
                 Uygulama Vitrini
             </h1>
-            <p class="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            <p class="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto" x-text="siteSettings.appDescription">
                 Geliştirdiğim projeler ve yayınladığım uygulamalar tek bir yerde.
             </p>
         </header>
